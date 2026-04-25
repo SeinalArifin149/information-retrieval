@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Search BM25</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+```
+<h1>Search Berita Madura 🔍</h1>
+
+<!-- <script>
+function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+}
+</script>
+<button onclick="toggleDarkMode()">🌙 Toggle Mode</button> -->
+
+<form method="POST">
+    <input type="text" name="query" placeholder="Cari berita..." value="{{ query }}">
+    <button type="submit">Cari</button>
+</form>
+
+<hr>
+
+{% if hasil %}
+    <h2>Hasil:</h2>
+
+    {% for item in hasil %}
+        <div style="margin-bottom:20px; padding:10px; border:1px solid #ccc;">
+
+            <h3>{{ item.judul }}</h3>
+
+            <!-- LINK -->
+            <p>
+                🔗 
+                <a href="{{ item.link }}" target="_blank">
+                    Baca berita
+                </a>
+            </p>
+
+            <p>Sumber: {{ item.sumber }}</p>
+            <p>Score: {{ item.score }}</p>
+
+        </div>
+    {% endfor %}
+
+{% else %}
+    <p>Tidak ada hasil</p>
+{% endif %}
+```
+
+</body>
+</html>

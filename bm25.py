@@ -14,17 +14,14 @@ from rank_bm25 import BM25Okapi
 # ==========================================
 # PATH FILE
 # ==========================================
-base_dir = os.path.dirname(_file_)
-csv_path = os.path.join(base_dir, "dataset_final_madura.csv")
+base_dir = os.path.dirname(__file__)
+csv_path = os.path.join(base_dir, "data", "Full Data berita madura.csv")
 
 # ==========================================
 # LOAD DATA
 # ==========================================
 print("Loading dataset...")
-df = pd.read_csv(csv_path, sep=";")
-
-# Jika dataset besar dan berat, aktifkan ini:
-# df = df.head(500)
+df = pd.read_csv(csv_path)  # <-- tambahkan sep
 
 print("Jumlah data:", len(df))
 
@@ -54,7 +51,7 @@ print("BM25 siap!")
 # ==========================================
 # FLASK
 # ==========================================
-app = Flask(_name_)
+app = Flask(__name__)  # <-- FIX
 
 # ==========================================
 # SEARCH FUNCTION
@@ -65,17 +62,12 @@ def search(query, top_n=5):
 
     tokenized_query = preprocess(query)
 
-    # hitung score BM25
     scores = bm25.get_scores(tokenized_query)
 
-    # salin dataframe
     result = df.copy()
     result["score"] = scores
 
-    # urutkan score terbesar
     result = result.sort_values(by="score", ascending=False)
-
-    # ambil score > 0
     result = result[result["score"] > 0]
 
     return result[["judul", "link", "sumber", "score"]].head(top_n).to_dict(orient="records")
@@ -95,7 +87,7 @@ def index():
     return render_template("index.html", hasil=hasil, query=query)
 
 # ==========================================
-# RUN
+# RUN (LOCAL ONLY)
 # ==========================================
-if _name_ == "_main_":
-    app.run(debug=False, use_reloader=False)
+if __name__ == "__main__":  # <-- FIX
+    app.run(debug=False, host="0.0.0.0", port=5000)
