@@ -6,262 +6,212 @@
     <title>Search Engine Berita Madura</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-<style>
-
-body{
-    font-family:'Segoe UI',sans-serif;
-    background:#f5f7fb;
-    margin:30px auto;
-    max-width:1100px;
-}
-
-h1{
-    color:#1e40af;
-}
-
-.card{
-    background:white;
-    border:none;
-    padding:18px;
-    margin-bottom:15px;
-    border-radius:12px;
-    box-shadow:0 3px 10px rgba(0,0,0,.08);
-    transition:.2s;
-}
-
-.card:hover{
-    transform:translateY(-2px);
-}
-
-.filter-box{
-    max-height:180px;
-    overflow:auto;
-    border:1px solid #ddd;
-    background:white;
-    padding:12px;
-    border-radius:8px;
-}
-
-input[type="text"]{
-    width:500px;
-    padding:12px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    font-size:15px;
-}
-
-select{
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #ccc;
-}
-
-button{
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:10px 20px;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#1d4ed8;
-}
-
-.score{
-    display:inline-block;
-    background:#dcfce7;
-    color:#166534;
-    padding:6px 12px;
-    border-radius:20px;
-    font-weight:bold;
-}
-
-a{
-    color:#2563eb;
-    text-decoration:none;
-}
-
-a:hover{
-    text-decoration:underline;
-}
-
-hr{
-    margin:25px 0;
-}
-
-</style>
-
 </head>
 <body>
 
     <h1>🔍 Search Engine Berita Madura</h1>
 
-    <form method="POST" id="searchForm">
+    <div class="form-container">
+        <form method="POST" id="searchForm">
 
-        <!-- QUERY -->
-
-        <input
-            type="text"
-            name="query"
-            placeholder="Masukkan kata kunci..."
-            value="{{ query or '' }}"
-        >
-
-        <br><br>
-
-        <!-- METODE -->
-
-        <label>
-            <b>Metode Pencarian:</b>
-        </label>
-
-        <select name="metode">
-
-            <option
-                value="bm25"
-                {% if metode == "bm25" %}
-                    selected
-                {% endif %}
+            <input
+                type="text"
+                name="query"
+                placeholder="Masukkan kata kunci pencarian..."
+                value="{{ query or '' }}"
+                autocomplete="off"
             >
-                BM25
-            </option>
+            <button type="submit">Cari</button>
 
-            <option
-                value="cosine"
-                {% if metode == "cosine" %}
-                    selected
-                {% endif %}
-            >
-                Cosine Similarity
-            </option>
+            <div class="filter-section">
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <p style="margin-bottom: 8px;"><b>Filter Sumber Berita:</b></p>
+                    <div class="filter-box-horizontal">
+                        
+                        <label class="filter-capsule select-all-capsule">
+                            <input type="checkbox" id="selectAll">
+                            Pilih Semua
+                        </label>
 
-        </select>
+                        {% for s in semua_sumber %}
+                            <label class="filter-capsule">
+                                <input
+                                    type="checkbox"
+                                    name="sumber"
+                                    value="{{ s }}"
+                                    {% if s in sumber_terpilih %} checked {% endif %}
+                                >
+                                {{ s }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
 
-        <br><br>
+                <div style="flex: 1; min-width: 300px;">
+                    <p style="margin-bottom: 8px;"><b>Jumlah Berita Ditampilkan:</b></p>
+                    <div class="filter-box-horizontal" style="align-items: center; display: flex; gap: 10px;">
+                        
+                        <input 
+                            type="number" 
+                            name="limit" 
+                            id="limitInput" 
+                            min="0" 
+                            value="{{ limit }}" 
+                            placeholder="Ketik angka..."
+                            style="width: 100px; padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; text-align: center;"
+                        >
+                        <span style="font-size: 14px; color: #475569; font-weight: bold;">Berita</span>
+                        
+                        <span style="color: #cbd5e1; margin: 0 5px;">|</span>
 
-        <!-- FILTER SUMBER -->
+                        <label class="filter-capsule select-all-capsule" style="margin: 0; display: inline-flex; align-items: center;">
+                            <input type="checkbox" id="limitAllCheckbox" {% if limit == 0 %} checked {% endif %}>
+                            Semua Berita
+                        </label>
 
-        <b>Filter Sumber Berita:</b>
-
-        <div class="filter-box">
-
-            {% for s in semua_sumber %}
-
-                <label>
-
-                    <input
-                        type="checkbox"
-                        name="sumber"
-                        value="{{ s }}"
-                        {% if s in sumber_terpilih %}
-                            checked
-                        {% endif %}
-                    >
-
-                    {{ s }}
-
-                </label>
-
-                <br>
-
-            {% endfor %}
-
-        </div>
-
-        <br>
-
-        <button type="submit">
-            Cari
-        </button>
-
-    </form>
-
-    <hr>
-
-    <!-- HASIL -->
-
-    {% if hasil and hasil|length > 0 %}
-
-        <h2>
-            Hasil Pencarian
-            ({{ metode|upper }})
-        </h2>
-
-        <p>
-            Total hasil ditampilkan:
-            <b>{{ hasil|length }}</b>
-        </p>
-
-        {% for item in hasil %}
-
-            <div class="card">
-
-                <h3>
-                    {{ item.judul }}
-                </h3>
-
-                <p>
-
-                    🔗
-
-                    <a
-                        href="{{ item.link }}"
-                        target="_blank"
-                    >
-                        Baca Berita
-                    </a>
-
-                </p>
-
-                <p>
-                    <b>Sumber:</b>
-                    {{ item.sumber }}
-                </p>
-
-                <p class="score">
-                    Score:
-                    {{ "%.6f"|format(item.score) }}
-                </p>
+                    </div>
+                </div>
 
             </div>
 
-        {% endfor %}
+        </form>
+    </div>
 
-    {% elif query %}
+    <hr>
 
-        <h3>
-            Tidak ditemukan hasil yang sesuai.
-        </h3>
+    {% if query %}
+        
+        <div class="results-wrapper">
 
+            <div class="column-bm25">
+                <h2 class="column-title">Metode BM25</h2>
+                
+                {% if hasil_bm25 and hasil_bm25|length > 0 %}
+                    <p style="color: #64748b;">Ditemukan: <b>{{ hasil_bm25|length }}</b> berita</p>
+                    
+                    {% for item in hasil_bm25 %}
+                        <div class="card">
+                            <h3 style="margin-top:0; font-size: 16px;">{{ item.judul }}</h3>
+                            <p style="margin: 8px 0;">🔗 <a href="{{ item.link }}" target="_blank">Baca Berita</a></p>
+                            <p style="margin-bottom:10px; font-size: 14px; color: #475569;"><b>Sumber:</b> {{ item.sumber }}</p>
+                            <span class="score">Score BM25: {{ "%.6f"|format(item.score) }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color:#64748b; font-style: italic;">Tidak ada berita yang cocok dengan metode BM25.</p>
+                {% endif %}
+            </div>
+
+            <div class="column-cosine">
+                <h2 class="column-title">Cosine Similarity</h2>
+                
+                {% if hasil_cosine and hasil_cosine|length > 0 %}
+                    <p style="color: #64748b;">Ditemukan: <b>{{ hasil_cosine|length }}</b> berita</p>
+                    
+                    {% for item in hasil_cosine %}
+                        <div class="card">
+                            <h3 style="margin-top:0; font-size: 16px;">{{ item.judul }}</h3>
+                            <p style="margin: 8px 0;">🔗 <a href="{{ item.link }}" target="_blank">Baca Berita</a></p>
+                            <p style="margin-bottom:10px; font-size: 14px; color: #475569;"><b>Sumber:</b> {{ item.sumber }}</p>
+                            <span class="score score-cosine">Score Cosine: {{ "%.6f"|format(item.score) }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color:#64748b; font-style: italic;">Tidak ada berita yang cocok dengan metode Cosine.</p>
+                {% endif %}
+            </div>
+
+            <div class="column-bm25-plus">
+                <h2 class="column-title">Metode BM25 Plus</h2>
+                
+                {% if hasil_bm25_plus and hasil_bm25_plus|length > 0 %}
+                    <p style="color: #64748b;">Ditemukan: <b>{{ hasil_bm25_plus|length }}</b> berita</p>
+                    
+                    {% for item in hasil_bm25_plus %}
+                        <div class="card">
+                            <h3 style="margin-top:0; font-size: 16px;">{{ item.judul }}</h3>
+                            <p style="margin: 8px 0;">🔗 <a href="{{ item.link }}" target="_blank">Baca Berita</a></p>
+                            <p style="margin-bottom:10px; font-size: 14px; color: #475569;"><b>Sumber:</b> {{ item.sumber }}</p>
+                            <span class="score" style="background:#fef08a; color:#854d0e;">Score BM25+: {{ "%.6f"|format(item.score) }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color:#64748b; font-style: italic;">Tidak ada berita yang cocok dengan metode BM25 Plus.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+    {% else %}
+        <p style="text-align: center; color: #64748b; font-size: 15px; margin-top: 50px;">
+            Silakan ketik kata kunci pada kolom di atas untuk membandingkan hasil pencarian.
+        </p>
     {% endif %}
 
 <script>
-
 const form = document.getElementById("searchForm");
+const selectAllCb = document.getElementById("selectAll");
+const sumberCbs = document.querySelectorAll('input[name="sumber"]');
+const limitInput = document.getElementById("limitInput");
+const limitAllCheckbox = document.getElementById("limitAllCheckbox");
 
-document
-.querySelectorAll('input[name="sumber"]')
-.forEach(cb => {
+// Sinkronisasi status master checkbox "Pilih Semua" saat pertama kali load
+const updateSelectAllStatus = () => {
+    const semuaTercentang = Array.from(sumberCbs).every(cb => cb.checked);
+    selectAllCb.checked = semuaTercentang;
+};
+updateSelectAllStatus();
 
+// Event ketika "Pilih Semua" diklik
+selectAllCb.addEventListener('change', () => {
+    sumberCbs.forEach(cb => {
+        cb.checked = selectAllCb.checked;
+    });
+    form.submit();
+});
+
+// Deteksi perubahan pada Checkbox Sumber Berita individu -> Auto Submit
+sumberCbs.forEach(cb => {
     cb.addEventListener('change', () => {
         form.submit();
     });
-
 });
 
-document
-.querySelector('input[name="query"]')
-.addEventListener('keypress', function(e){
+// LOGIKA BARU UNTUK INPUT ANGKA LIMIT
 
-    if(e.key === "Enter"){
+// 1. Jika checkbox "Semua Berita" dicentang, set angka jadi 0 dan langsung submit
+limitAllCheckbox.addEventListener('change', () => {
+    if (limitAllCheckbox.checked) {
+        limitInput.value = 0;
+    } else {
+        limitInput.value = 10; // Default balik ke 10 jika uncheck
+    }
+    form.submit();
+});
+
+// 2. Submit otomatis saat user selesai mengetik angka dan memindahkan kursor (blur/change)
+limitInput.addEventListener('change', () => {
+    if (parseInt(limitInput.value) === 0) {
+        limitAllCheckbox.checked = true;
+    } else {
+        limitAllCheckbox.checked = false;
+    }
+    form.submit();
+});
+
+// 3. Submit otomatis jika user menekan tombol "Enter" di dalam kotak input angka
+limitInput.addEventListener('keypress', (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault(); // Cegah double submit bawaan browser
+        if (parseInt(limitInput.value) === 0) {
+            limitAllCheckbox.checked = true;
+        } else {
+            limitAllCheckbox.checked = false;
+        }
         form.submit();
     }
-
 });
-
 </script>
 
 </body>
