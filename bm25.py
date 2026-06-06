@@ -1,6 +1,6 @@
 # ==========================================
 # SEARCH ENGINE BERITA MADURA
-# BM25 + COSINE SIMILARITY
+# BM25 + BM25 PLUS + COSINE SIMILARITY
 # ==========================================
 
 from flask import Flask, render_template, request
@@ -8,7 +8,8 @@ import pandas as pd
 import os
 import re
 
-from rank_bm25 import BM25Okapi
+# Import BM25Okapi (standar) dan BM25Plus
+from rank_bm25 import BM25Okapi, BM25Plus
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -63,21 +64,27 @@ def preprocess(text):
     return text.split()
 
 # ==========================================
-# BM25
+# CORPUS SETUP
 # ==========================================
 
 corpus = df["judul"].apply(
     preprocess
 ).tolist()
 
-print("Membangun BM25...")
+# ==========================================
+# INSTANSIASI BM25 & BM25 PLUS
+# ==========================================
 
+print("Membangun BM25 Standar...")
 bm25 = BM25Okapi(corpus)
 
-print("BM25 siap!")
+print("Membangun BM25 Plus...")
+bm25_plus = BM25Plus(corpus) # Menggunakan parameter default (delta=1.0)
+
+print("Sistem BM25 & BM25 Plus siap!")
 
 # ==========================================
-# COSINE SIMILARITY (TF-IDF)
+# COSINE SIMILARITY SETUP (TF-IDF)
 # ==========================================
 
 documents = df["judul"].tolist()
@@ -93,163 +100,130 @@ tfidf_matrix = vectorizer.fit_transform(
 print("TF-IDF siap!")
 
 # ==========================================
-# FLASK
+# FLASK APPLICATION
 # ==========================================
 
 app = Flask(__name__)
 
 # ==========================================
-# SEARCH BM25
+# SEARCH FUNCTION: BM25 STANDAR
 # ==========================================
 
-def search_bm25(
-    query,
-    sumber_filter=None,
-    top_n=10
-):
+def search_bm25(query, sumber_filter=None, top_n=10):
 
     if not query.strip():
         return []
 
     tokenized_query = preprocess(query)
-
-    scores = bm25.get_scores(
-        tokenized_query
-    )
+    scores = bm25.get_scores(tokenized_query)
 
     result = df.copy()
-
     result["score"] = scores
-
-    result = result.sort_values(
-        by="score",
-        ascending=False
-    )
-
-    result = result[
-        result["score"] > 0
-    ]
+    result = result.sort_values(by="score", ascending=False)
+    result = result[result["score"] > 0]
 
     if sumber_filter:
-        result = result[
-            result["sumber"].isin(
-                sumber_filter
-            )
-        ]
+        result = result[result["sumber"].isin(sumber_filter)]
 
-    return result[
-        ["judul", "link", "sumber", "score"]
-    ].head(top_n).to_dict(
-        orient="records"
-    )
+    return result[["judul", "link", "sumber", "score"]].head(top_n).to_dict(orient="records")
 
 # ==========================================
-# SEARCH COSINE
+# SEARCH FUNCTION: BM25 PLUS
 # ==========================================
 
-def search_cosine(
-    query,
-    sumber_filter=None,
-    top_n=10
-):
+def search_bm25_plus(query, sumber_filter=None, top_n=10):
 
     if not query.strip():
         return []
 
-    query_vec = vectorizer.transform(
-        [query]
-    )
-
-    scores = cosine_similarity(
-        query_vec,
-        tfidf_matrix
-    ).flatten()
+    tokenized_query = preprocess(query)
+    scores = bm25_plus.get_scores(tokenized_query) # Memanggil objek bm25_plus
 
     result = df.copy()
-
     result["score"] = scores
-
-    result = result.sort_values(
-        by="score",
-        ascending=False
-    )
-
-    result = result[
-        result["score"] > 0
-    ]
+    result = result.sort_values(by="score", ascending=False)
+    result = result[result["score"] > 0]
 
     if sumber_filter:
-        result = result[
-            result["sumber"].isin(
-                sumber_filter
-            )
-        ]
+        result = result[result["sumber"].isin(sumber_filter)]
 
-    return result[
-        ["judul", "link", "sumber", "score"]
-    ].head(top_n).to_dict(
-        orient="records"
-    )
+    return result[["judul", "link", "sumber", "score"]].head(top_n).to_dict(orient="records")
 
 # ==========================================
-# ROUTE
+# SEARCH FUNCTION: COSINE SIMILARITY
+# ==========================================
+
+def search_cosine(query, sumber_filter=None, top_n=10):
+
+    if not query.strip():
+        return []
+
+    query_vec = vectorizer.transform([query])
+    scores = cosine_similarity(query_vec, tfidf_matrix).flatten()
+
+    result = df.copy()
+    result["score"] = scores
+    result = result.sort_values(by="score", ascending=False)
+    result = result[result["score"] > 0]
+
+    if sumber_filter:
+        result = result[result["sumber"].isin(sumber_filter)]
+
+    return result[["judul", "link", "sumber", "score"]].head(top_n).to_dict(orient="records")
+
+# ==========================================
+# ROUTE UTAMA
 # ==========================================
 
 @app.route("/", methods=["GET", "POST"])
 def index():
 
-    hasil = []
-
+    hasil_bm25 = []
+    hasil_bm25_plus = []
+    hasil_cosine = []
     query = ""
-
-    metode = "bm25"
-
-    sumber_terpilih = []
+    limit = 10
+    sumber_terpilih = semua_sumber.copy()
 
     if request.method == "POST":
 
-        query = request.form.get(
-            "query",
-            ""
-        )
+        query = request.form.get("query", "")
+        sumber_terpilih = request.form.getlist("sumber")
+        limit = int(request.form.get("limit", 10))
 
-        metode = request.form.get(
-            "metode",
-            "bm25"
-        )
+        top_n_val = len(df) if limit == 0 else limit
 
-        sumber_terpilih = request.form.getlist(
-            "sumber"
-        )
-
-        if metode == "cosine":
-
-            hasil = search_cosine(
+        if query.strip():
+            
+            # Jalankan ketiga algoritma pencarian sekaligus
+            hasil_bm25 = search_bm25(
                 query,
                 sumber_filter=sumber_terpilih,
-                top_n=10
+                top_n=top_n_val
             )
 
-        else:
-
-            hasil = search_bm25(
+            hasil_bm25_plus = search_bm25_plus(
                 query,
                 sumber_filter=sumber_terpilih,
-                top_n=10
+                top_n=top_n_val
+            )
+
+            hasil_cosine = search_cosine(
+                query,
+                sumber_filter=sumber_terpilih,
+                top_n=top_n_val
             )
 
     return render_template(
         "index.html",
-        hasil=hasil,
+        hasil_bm25=hasil_bm25,
+        hasil_bm25_plus=hasil_bm25_plus,
+        hasil_cosine=hasil_cosine,
         query=query,
-        metode=metode,
+        limit=limit,
         semua_sumber=semua_sumber,
         sumber_terpilih=sumber_terpilih
     )
-
-# ==========================================
-# RUN
-# ==========================================
 
 if __name__ == "__main__":
     app.run(debug=True)
