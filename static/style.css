@@ -1,0 +1,188 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f7fb;
+    margin: 30px auto;
+    max-width: 1200px;
+    padding: 0 15px;
+}
+
+h1 {
+    color: #1e40af;
+}
+
+.form-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.05);
+}
+
+/* 🌟 PERBAIKAN: Base Style untuk Card Berita */
+.card {
+    background: white;
+    border: 1px solid #e2e8f0; /* Kasih border default tipis biar clean */
+    padding: 18px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,.04);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Transisi animasi lebih smooth */
+}
+
+/* 🌟 PERBAIKAN: Efek Hover Card Berita Biar Hidup */
+.card:hover {
+    transform: translateY(-4px); /* Naik sedikit lebih tinggi biar kerasa melayang */
+    border-color: #bfdbfe; /* Border berubah jadi biru muda halus */
+    box-shadow: 0 12px 20px rgba(30, 64, 175, 0.08); /* Bayangan melebar ke bawah dengan tint biru */
+}
+
+.filter-section {
+    display: flex;
+    gap: 30px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-box {
+    max-height: 140px;
+    overflow: auto;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    padding: 12px;
+    border-radius: 8px;
+    min-width: 250px;
+}
+
+input[type="text"] {
+    width: 100%;
+    max-width: 600px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: white;
+    font-size: 14px;
+    min-width: 150px;
+    cursor: pointer;
+}
+
+button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+.score {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.score-cosine {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+hr {
+    margin: 35px 0;
+    border: 0;
+    border-top: 2px solid #e2e8f0;
+}
+
+/* 3 KOLOM GRID UNTUK HASIL */
+.results-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+/* Responsif untuk layar HP/Tablet */
+@media (max-width: 992px) {
+    .results-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+.column-title {
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 8px;
+    color: #1e40af;
+    margin-bottom: 20px;
+}
+
+/* --- STYLE UNTUK FILTER MENYAMPING --- */
+
+.filter-box-horizontal {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 10px;
+    background: #fafafa;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.filter-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9; 
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #e2e8f0; 
+    transition: all 0.2s ease; 
+}
+
+.filter-capsule:hover {
+    background: #eff6ff; 
+    border-color: #3b82f6; 
+    color: #1e40af; 
+    transform: translateY(-1px); 
+    box-shadow: 0 3px 6px rgba(59, 130, 246, 0.12); 
+}
+
+.select-all-capsule {
+    background: #2563eb; 
+    color: white;
+    font-weight: bold;
+    border-color: #2563eb;
+}
+
+.select-all-capsule:hover {
+    background: #1d4ed8; 
+    border-color: #1d4ed8;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25); 
+}
