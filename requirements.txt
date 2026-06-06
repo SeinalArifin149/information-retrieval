@@ -1,4 +1,5 @@
 flask
 sastrawi
+pandas
 bm25
 rank-bm25
