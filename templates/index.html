@@ -1,94 +1,267 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Search BM25</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Engine Berita Madura</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <style>
-        .card {
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-    </style>
+<style>
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:#f5f7fb;
+    margin:30px auto;
+    max-width:1100px;
+}
+
+h1{
+    color:#1e40af;
+}
+
+.card{
+    background:white;
+    border:none;
+    padding:18px;
+    margin-bottom:15px;
+    border-radius:12px;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+    transition:.2s;
+}
+
+.card:hover{
+    transform:translateY(-2px);
+}
+
+.filter-box{
+    max-height:180px;
+    overflow:auto;
+    border:1px solid #ddd;
+    background:white;
+    padding:12px;
+    border-radius:8px;
+}
+
+input[type="text"]{
+    width:500px;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:15px;
+}
+
+select{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.score{
+    display:inline-block;
+    background:#dcfce7;
+    color:#166534;
+    padding:6px 12px;
+    border-radius:20px;
+    font-weight:bold;
+}
+
+a{
+    color:#2563eb;
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
+}
+
+hr{
+    margin:25px 0;
+}
+
+</style>
+
 </head>
 <body>
 
-<h1>Search Berita Madura 🔍</h1>
+    <h1>🔍 Search Engine Berita Madura</h1>
 
-<form method="POST" id="searchForm">
+    <form method="POST" id="searchForm">
 
-    <!-- INPUT SEARCH -->
-    <input type="text" name="query" placeholder="Cari berita..." value="{{ query or '' }}">
+        <!-- QUERY -->
 
-    <br><br>
+        <input
+            type="text"
+            name="query"
+            placeholder="Masukkan kata kunci..."
+            value="{{ query or '' }}"
+        >
 
-    <!-- FILTER CHECKBOX -->
-    <b>Filter Sumber:</b><br>
+        <br><br>
 
-    <div style="max-height:150px; overflow:auto; border:1px solid #ccc; padding:10px;">
-        {% for s in semua_sumber %}
-            <label>
-                <input type="checkbox" name="sumber" value="{{ s }}"
-                    {% if s in sumber_terpilih %}checked{% endif %}>
-                {{ s }}
-            </label><br>
-        {% endfor %}
-    </div>
+        <!-- METODE -->
 
-    <br>
+        <label>
+            <b>Metode Pencarian:</b>
+        </label>
 
-    <!-- tombol optional (boleh dihapus kalau mau full auto) -->
-    <button type="submit">Cari</button>
+        <select name="metode">
 
-</form>
+            <option
+                value="bm25"
+                {% if metode == "bm25" %}
+                    selected
+                {% endif %}
+            >
+                BM25
+            </option>
 
-<hr>
+            <option
+                value="cosine"
+                {% if metode == "cosine" %}
+                    selected
+                {% endif %}
+            >
+                Cosine Similarity
+            </option>
 
-<!-- HASIL -->
-{% if hasil and hasil|length > 0 %}
-    <h2>Hasil:</h2>
+        </select>
 
-    {% for item in hasil %}
-        <div class="card">
+        <br><br>
 
-            <h3>{{ item.judul }}</h3>
+        <!-- FILTER SUMBER -->
 
-            <p>
-                🔗
-                <a href="{{ item.link }}" target="_blank">
-                    Baca berita
-                </a>
-            </p>
+        <b>Filter Sumber Berita:</b>
 
-            <p><b>Sumber:</b> {{ item.sumber }}</p>
-            <p><b>Score:</b> {{ item.score }}</p>
+        <div class="filter-box">
+
+            {% for s in semua_sumber %}
+
+                <label>
+
+                    <input
+                        type="checkbox"
+                        name="sumber"
+                        value="{{ s }}"
+                        {% if s in sumber_terpilih %}
+                            checked
+                        {% endif %}
+                    >
+
+                    {{ s }}
+
+                </label>
+
+                <br>
+
+            {% endfor %}
 
         </div>
-    {% endfor %}
 
-{% else %}
-    <p>Tidak ada hasil</p>
-{% endif %}
+        <br>
 
-<!-- AUTO SUBMIT SCRIPT -->
+        <button type="submit">
+            Cari
+        </button>
+
+    </form>
+
+    <hr>
+
+    <!-- HASIL -->
+
+    {% if hasil and hasil|length > 0 %}
+
+        <h2>
+            Hasil Pencarian
+            ({{ metode|upper }})
+        </h2>
+
+        <p>
+            Total hasil ditampilkan:
+            <b>{{ hasil|length }}</b>
+        </p>
+
+        {% for item in hasil %}
+
+            <div class="card">
+
+                <h3>
+                    {{ item.judul }}
+                </h3>
+
+                <p>
+
+                    🔗
+
+                    <a
+                        href="{{ item.link }}"
+                        target="_blank"
+                    >
+                        Baca Berita
+                    </a>
+
+                </p>
+
+                <p>
+                    <b>Sumber:</b>
+                    {{ item.sumber }}
+                </p>
+
+                <p class="score">
+                    Score:
+                    {{ "%.6f"|format(item.score) }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% elif query %}
+
+        <h3>
+            Tidak ditemukan hasil yang sesuai.
+        </h3>
+
+    {% endif %}
+
 <script>
+
 const form = document.getElementById("searchForm");
 
-// auto submit kalau checkbox berubah
-document.querySelectorAll('input[name="sumber"]').forEach(cb => {
+document
+.querySelectorAll('input[name="sumber"]')
+.forEach(cb => {
+
     cb.addEventListener('change', () => {
         form.submit();
     });
+
 });
 
-// optional: auto submit kalau user tekan enter di search
-document.querySelector('input[name="query"]').addEventListener('keypress', function(e) {
-    if (e.key === "Enter") {
+document
+.querySelector('input[name="query"]')
+.addEventListener('keypress', function(e){
+
+    if(e.key === "Enter"){
         form.submit();
     }
+
 });
+
 </script>
 
 </body>
